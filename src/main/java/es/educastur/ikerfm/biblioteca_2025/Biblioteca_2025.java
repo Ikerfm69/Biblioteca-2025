@@ -15,12 +15,14 @@ public class Biblioteca_2025 {
         this.libros = new ArrayList();
         this.usuarios = new ArrayList();
         this.prestamos = new ArrayList();
+        this.prestamosHist = new ArrayList();
     }
     
 
     public static void main(String[] args) {
         Biblioteca_2025 b= new Biblioteca_2025();
         b.cargaDatos();
+        b.fueraPlazo();
         b.menu();
     }
     
@@ -90,7 +92,8 @@ public class Biblioteca_2025 {
             System.out.println("\n\n\n\n\n\t\t\t\tUSUARIOS\n");
             System.out.println("\t\t\t\t1 - NUEVO USUARIO");
             System.out.println("\t\t\t\t2 - ELIMINAR USUARIO");
-            System.out.println("\t\t\t\t3 - LISTADO");
+            System.out.println("\t\t\t\t3 - MODIFICAR USUARIO");
+            System.out.println("\t\t\t\t4 - LISTADO");
             System.out.println("\t\t\t\t9 - SALIR");
             opcion = sc.nextInt();
             switch (opcion) {
@@ -103,6 +106,9 @@ public class Biblioteca_2025 {
                     break;
                     }
                 case 3: {
+                    modificarUsuario();
+                }
+                case 4: {
                     listadoUsuario();
                 }
             }
@@ -117,8 +123,9 @@ public class Biblioteca_2025 {
             System.out.println("\t\t\t\t1 - NUEVO PRESTAMO");
             System.out.println("\t\t\t\t2 - DEVOLUCIONES");
             System.out.println("\t\t\t\t3 - PRÓRROGAS");
-            System.out.println("\t\t\t\t4 - LISTADO DE PRÉSTAMOS ACTIVOS");
-            System.out.println("\t\t\t\t5 - LISTADO DE PRÉSTAMOS HISTÓRTICOS");
+            System.out.println("\t\t\t\t4 - LISTADO GENERAL DE PRÉSTAMOS");
+            System.out.println("\t\t\t\t5 - LISTADO DE PRÉSTAMOS USUARIO");
+            System.out.println("\t\t\t\t6 - LISTADO DE PRESTAMOS LIBRO (USUARIOS QUE LO LEEN)");
             System.out.println("\t\t\t\t9 - SALIR");
             opcion = sc.nextInt();
             switch (opcion) {
@@ -139,6 +146,9 @@ public class Biblioteca_2025 {
                 }
                 case 5: {
                     listadoPrestamosUsu();
+                }
+                case 6: {
+                    listadoPrestamosLibros();
                 }
             }
         }while (opcion != 9);
@@ -219,6 +229,11 @@ public class Biblioteca_2025 {
         usuarios.add(new Usuario(dni,nombre,email,telefono));
         Collections.sort(usuarios);
     }
+    
+    private void modificarUsuario() {
+        
+    }
+
 
     private void listadoUsuario() {
         System.out.println("A continuación les mostraremos los usuarios de nuestra biblioteca:");
@@ -241,12 +256,16 @@ public class Biblioteca_2025 {
     //<editor-fold defaultstate="collapsed" desc="GESTION PRESTAMOS">
     private void nuevoPrestamo() {
         System.out.println("Identificación del usuario:");
-        int posUsuario = buscaDni(solicitaDni());
+        String dni=solicitaDni();
+        int posUsuario = buscaDni(dni);
+        
         if (posUsuario==-1){
             System.out.println("No es aún usuario de la biblioteca");
         }else{
             System.out.println("Identificación del libro:"); 
-            int posLibro=buscaIsbn(solicitaIsbn());
+            String isbn=solicitaIsbn();
+            int posLibro=buscaIsbn(isbn);
+            
             if (posLibro==-1){
                 System.out.println("El ISBN pertenece a un libro inexistente");
             } else if (libros.get(posLibro).getEjemplares()>0){
@@ -262,6 +281,9 @@ public class Biblioteca_2025 {
     private void listadoPrestamos() {
         System.out.println("Listado de prestamos activos:");
         for (Prestamo p:prestamos) {
+            if (p.getFechaDev().isBefore(LocalDate.now())) {
+                System.out.println("Libro fuera de plazo: ");
+            }
             System.out.println(p);
         }    
         
@@ -272,7 +294,50 @@ public class Biblioteca_2025 {
     }
     
     private void listadoPrestamosUsu() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        String dni = solicitaDni();
+        int pos = buscaDni(dni);
+        
+        if (pos==-1) {
+            System.out.println("No hay nadie con ese DNI");
+        } else {
+            System.out.println("Préstamos activos de: " + usuarios.get(pos).getNombre());
+            for (Prestamo p : prestamos) {
+                if (p.getUsuarioPrest().getDni().equals(dni)) {
+                    if (p.getFechaDev().isBefore(LocalDate.now())) {
+                        System.out.println("Libro fuera de plazo: ");                        
+                    }
+                    System.out.println(p);
+                } 
+            }
+            System.out.println("\nPrestamos ya devueltos por: " + usuarios.get(pos).getNombre());
+            for (Prestamo p : prestamosHist) {
+                if (p.getUsuarioPrest().getDni().equals(dni)) {
+                    System.out.println(p);   
+                }
+            }
+        } 
+    }
+    
+    private void listadoPrestamosLibros(){
+        String isbn = solicitaIsbn();
+        int pos = buscaIsbn(isbn);
+        if (pos==-1) {
+            System.out.println("No tengo ningún libro con ese ISBN");
+        } else {
+            System.out.println("Usuarios/as que lo están leyendo:");
+            for (Prestamo p : prestamos) {
+                if (p.getLibroPrest().getIsbn().equals(isbn)) {
+                    System.out.println(p.getUsuarioPrest());
+                }
+            }
+            
+            System.out.println("Usuarios/as que ya lo han leído:");
+            for (Prestamo p : prestamosHist) {
+                if (p.getLibroPrest().getIsbn().equals(isbn)) {
+                    System.out.println(p.getUsuarioPrest());
+                }
+            }
+        }
     }
 
     private void devolucion(){
@@ -284,6 +349,8 @@ public class Biblioteca_2025 {
         } else {
             prestamos.get(pos).setFechaDev(LocalDate.now());
             libros.get(buscaIsbn(isbnLibro)).setEjemplares(libros.get(buscaIsbn(isbnLibro)).getEjemplares()+1);
+            prestamosHist.add(prestamos.get(pos));
+            prestamos.remove(pos);
         }
     }
     private void prorroga(){
@@ -291,7 +358,7 @@ public class Biblioteca_2025 {
         
         String dni = solicitaDni();
         String isbn = solicitaIsbn();
-        int pos = buscaPrestamo(solicitaDni(), solicitaIsbn());
+        int pos = buscaPrestamo(dni, isbn);
         if (pos==-1) {
             System.out.println("No hay ningún préstamo con esos datos");
         } else {
@@ -321,12 +388,12 @@ public class Biblioteca_2025 {
         usuarios.add(new Usuario("66","Juan","juan@email.com","626666666"));
         
         LocalDate hoy= LocalDate.now();
-        prestamos.add(new Prestamo(libros.get(2),usuarios.get(0), hoy,hoy.plusDays(15)));
-        prestamos.add(new Prestamo(libros.get(8),usuarios.get(2), hoy,hoy.plusDays(15)));
+        prestamos.add(new Prestamo(libros.get(2),usuarios.get(0), hoy.minusDays(20),hoy.minusDays(5)));
+        prestamos.add(new Prestamo(libros.get(8),usuarios.get(0), hoy,hoy.plusDays(15)));
         prestamos.add(new Prestamo(libros.get(5),usuarios.get(4), hoy,hoy.plusDays(15)));
-        prestamos.add(new Prestamo(libros.get(5),usuarios.get(0), hoy,hoy.plusDays(15)));
+        prestamos.add(new Prestamo(libros.get(5),usuarios.get(0), hoy.minusDays(20),hoy.minusDays(5)));
         prestamos.add(new Prestamo(libros.get(6),usuarios.get(2), hoy,hoy.plusDays(15)));
-        prestamos.add(new Prestamo(libros.get(2),usuarios.get(1), hoy,hoy.plusDays(15)));        
+        prestamos.add(new Prestamo(libros.get(2),usuarios.get(1 ), hoy,hoy.plusDays(15)));        
     }
     
     /**
@@ -395,6 +462,14 @@ public class Biblioteca_2025 {
         return pos;
     }
     
+    public void fueraPlazo(){
+        System.out.println("Préstamos fuera de plazo:");
+        for (Prestamo p : prestamos) {
+            if (p.getFechaDev().isBefore(LocalDate.now())) {
+                System.out.println(p);
+            }
+        }
+    }
         
     //</editor-fold>
 
