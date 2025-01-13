@@ -8,7 +8,8 @@ import java.util.Scanner;
 public class Biblioteca_2025 {
     private ArrayList <Libro> libros;
     private ArrayList <Usuario> usuarios;
-    private ArrayList <Prestamo> prestamos ;
+    private ArrayList <Prestamo> prestamos;
+    private ArrayList <Prestamo> prestamosHist;
 
     public Biblioteca_2025() {
         this.libros = new ArrayList();
@@ -116,7 +117,8 @@ public class Biblioteca_2025 {
             System.out.println("\t\t\t\t1 - NUEVO PRESTAMO");
             System.out.println("\t\t\t\t2 - DEVOLUCIONES");
             System.out.println("\t\t\t\t3 - PRÓRROGAS");
-            System.out.println("\t\t\t\t4 - LISTADO");
+            System.out.println("\t\t\t\t4 - LISTADO DE PRÉSTAMOS ACTIVOS");
+            System.out.println("\t\t\t\t5 - LISTADO DE PRÉSTAMOS HISTÓRTICOS");
             System.out.println("\t\t\t\t9 - SALIR");
             opcion = sc.nextInt();
             switch (opcion) {
@@ -134,6 +136,9 @@ public class Biblioteca_2025 {
                 }
                 case 4: {
                     listadoPrestamos();
+                }
+                case 5: {
+                    listadoPrestamosUsu();
                 }
             }
         }while (opcion != 9);
@@ -154,81 +159,35 @@ public class Biblioteca_2025 {
 
     private void modificarLibro() {
         Scanner sc = new Scanner(System.in);
-            int opcion = 0;
-            do {
-                System.out.println("\n\n\n\n\n\t\t\t\t¿QUÉ DESEA MODIFICAR?\n");
-                System.out.println("\t\t\t\t1 - AUTOR");
-                System.out.println("\t\t\t\t2 - TITULO");
-                System.out.println("\t\t\t\t3 - EJEMPLARES");
-                System.out.println("\t\t\t\t9 - SALIR");
-                opcion = sc.nextInt();
-                switch (opcion) {
-                    case 1: {
-                        modificaAutor();
-                        break;
-                    }
-                    case 2: {
-                        modificaTitulo();
-                        break;
-                        }
-                    case 3: {
-                        modificaEjemplares();
-                        break;
-                    }
-                }
-            }while (opcion != 9);  
+        String parametro;
+        int ejemplares = 0;
+        System.out.println("¿De qué libro desea modificar los ejemplares?");
+        int posLibro = buscaIsbn(solicitaIsbn());
+        if (posLibro==-1){
+            System.out.println("No es ningun libro de la biblioteca");
+        }else{
+            System.out.println("EL libro seleccionado es " + libros.get(posLibro).getTitulo());
+            System.out.println("");
+            System.out.println("¿Desea añadir(+) o restar(-) ejemplares?");
+            parametro = sc.next();
+            if (parametro=="-") {
+                System.out.println("¿Cuántos ejemplares desea añadir?");
+                ejemplares = sc.nextInt();
+                libros.get(posLibro).setEjemplares(libros.get(posLibro).getEjemplares()+ejemplares);
+            } else if(parametro=="-"){
+                System.out.println("¿Cuántos ejemplares desea quitar?");
+                ejemplares = sc.nextInt();
+                libros.get(posLibro).setEjemplares(libros.get(posLibro).getEjemplares()-ejemplares);
+            }else{
+                System.out.println("No has escrito el parámetro correcto(+/-)");
+            }
+        }
     }
 
     private void eliminarLibro() {
         
     }
     
-    private void modificaAutor() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Identificación del libro:");
-        System.out.println("¿De qué libro desea modificar el autor?");
-        int posLibro = buscaIsbn(solicitaIsbn());
-        if (posLibro==-1){
-            System.out.println("No es ningun libro de la biblioteca");
-        }else{
-            System.out.println("EL libro seleccionado es " + libros.get(posLibro).getTitulo());
-            System.out.println("");
-            System.out.println("¿Cuál es el nuevo nombre del autor?");
-            libros.get(posLibro).setAutor(sc.nextLine());
-        }
-    }
-    
-
-    private void modificaTitulo() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Identificación del libro:");
-        System.out.println("¿De qué libro desea modificar el titulo?");
-        int posLibro = buscaIsbn(solicitaIsbn());
-        if (posLibro==-1){
-            System.out.println("No es ningun libro de la biblioteca");
-        }else{
-            System.out.println("EL libro seleccionado es " + libros.get(posLibro).getTitulo());
-            System.out.println("");
-            System.out.println("¿Cuál es el nuevo titulo del libro?");
-            libros.get(posLibro).setAutor(sc.nextLine());
-        }
-    }
-    
-
-    private void modificaEjemplares() {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Identificación del libro:");
-        System.out.println("¿De qué libro desea modificar el nº de ejemplares?");
-        int posLibro = buscaIsbn(solicitaIsbn());
-        if (posLibro==-1){
-            System.out.println("No es ningun libro de la biblioteca");
-        }else{
-            System.out.println("EL libro seleccionado es " + libros.get(posLibro).getTitulo());
-            System.out.println("");
-            System.out.println("¿Cuál es el nuevo nº de ejemplares?");
-            libros.get(posLibro).setAutor(sc.nextLine());
-        }
-        }
 //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="GESTION USUARIOS">
@@ -262,18 +221,19 @@ public class Biblioteca_2025 {
     }
 
     private void listadoUsuario() {
+        System.out.println("A continuación les mostraremos los usuarios de nuestra biblioteca:");
      for (Usuario u:usuarios) {
-            System.out.println("A continuación les mostraremos los usuarios de nuestra biblioteca:");
             System.out.println(u);
         }   
     }
 
     private void eliminarUsuario() {
-        int posLibro = buscaIsbn(solicitaIsbn());
-        if(posLibro == -1){
-            System.out.println("No es ningun libro de la biblioteca");
+        int posUsuario = buscaDni(solicitaDni());
+        if(posUsuario == -1){
+            System.out.println("No es ningun usuario de la biblioteca");
         }else{
-            usuarios.remove(posLibro);
+            usuarios.remove(posUsuario);
+            System.out.println("Usuario eliminado correctamente");
         }
     }
 //</editor-fold>
@@ -300,13 +260,21 @@ public class Biblioteca_2025 {
     }
 
     private void listadoPrestamos() {
+        System.out.println("Listado de prestamos activos:");
         for (Prestamo p:prestamos) {
-            System.out.println("A continuación les mostraremos los prestamos realizados:");
             System.out.println(p);
         }    
+        
+        System.out.println("\nListado de prestamos históricos:");
+        for (Prestamo p : prestamosHist) {
+            System.out.println(p);
+        }
+    }
+    
+    private void listadoPrestamosUsu() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    
     private void devolucion(){
         System.out.println("Datos para la prórroga del préstamo: ");
         String isbnLibro=solicitaIsbn();
@@ -315,15 +283,20 @@ public class Biblioteca_2025 {
             System.out.println("No hay ningún préstamo con esos datos");
         } else {
             prestamos.get(pos).setFechaDev(LocalDate.now());
+            libros.get(buscaIsbn(isbnLibro)).setEjemplares(libros.get(buscaIsbn(isbnLibro)).getEjemplares()+1);
         }
     }
     private void prorroga(){
         System.out.println("Datos para la prórroga del préstamo: ");
+        
+        String dni = solicitaDni();
+        String isbn = solicitaIsbn();
         int pos = buscaPrestamo(solicitaDni(), solicitaIsbn());
         if (pos==-1) {
             System.out.println("No hay ningún préstamo con esos datos");
         } else {
             prestamos.get(pos).setFechaDev(prestamos.get(pos).getFechaDev().plusDays(15));
+            prestamos.get(pos).setFechaDev(LocalDate.now());
         }
     }
 //</editor-fold>
@@ -424,5 +397,6 @@ public class Biblioteca_2025 {
     
         
     //</editor-fold>
+
 }
 
